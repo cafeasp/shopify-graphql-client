@@ -95,9 +95,32 @@ const fetchPayoutsByDate = async (date) => {
 
     return allPayouts;
 };
+// Function to save payouts to a CSV file
+//pass payouts array and date in YYYY-MM-DD format
+//the date will be used to name the file
+//e.g. if date is 2023-10-01, the file will be named shopify_payouts_2023-10-01.csv
+const savePayoutsToCSV = async (payouts, date) => {
+    const csvData = payouts.map(payout => ({
+        type: payout.type,
+        transactionDate: payout.transactionDate,
+        amount: payout.amount.amount,
+        currency: payout.amount.currencyCode,
+        fee: payout.fee.amount,
+        net: payout.net.amount
+    }));
+
+    const csvContent = [
+        ["Type", "Transaction Date", "Amount", "Currency", "Fee", "Net"],
+        ...csvData.map(row => Object.values(row))
+    ].map(e => e.join(",")).join("\n");
+
+    fs.writeFileSync(`shopify_payouts_${date}.csv`, csvContent);
+    console.log(`Payouts saved to shopify_payouts_${date}.csv`);
+};
 
 fetchPayoutsByDate(getYesterdayDate()).then(async payouts => {
-    console.log("Payouts for yesterday:", payouts);
+    //console.log("Payouts for yesterday:", payouts);
+    await savePayoutsToCSV(payouts, getYesterdayDate());
 }).catch(error => {
     console.error("Error in fetching payouts:", error);
 });
